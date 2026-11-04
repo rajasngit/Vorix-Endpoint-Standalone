@@ -1,0 +1,10 @@
+dist/
+pilot/
+standalone/upstream/
+*.dpapi
+*.pfx
+*.key
+*.exe
+*.zip
+*.tar.gz
+output/
