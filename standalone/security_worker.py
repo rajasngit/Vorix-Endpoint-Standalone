@@ -92,9 +92,9 @@ def main():
             try:
                 events=json.loads(client.history.read_text(encoding='utf-8')) if client.history.exists() else {}
                 unresolved=sum(bool(event['needs_review']) for event in events.values())
-                atomic_json(status/'agent.json',dict(pid=os.getpid(),updated_at=time.time(),version='1.2.0',unresolved=unresolved,event_count=len(events),monitoring=report,error=error))
+                atomic_json(status/'agent.json',dict(pid=os.getpid(),updated_at=time.time(),version='1.2.1',unresolved=unresolved,event_count=len(events),monitoring=report,error=error))
             except Exception as exc:
-                atomic_json(status/'agent.json',dict(pid=os.getpid(),updated_at=time.time(),version='1.2.0',error=str(exc)[:240]))
+                atomic_json(status/'agent.json',dict(pid=os.getpid(),updated_at=time.time(),version='1.2.1',error=str(exc)[:240]))
             time.sleep(10)
 
 

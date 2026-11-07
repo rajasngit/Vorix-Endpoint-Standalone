@@ -11,10 +11,10 @@ using Microsoft.Win32;
 
 [assembly: AssemblyTitle("Vorix Endpoint")]
 [assembly: AssemblyProduct("Vorix Endpoint Standalone")]
-[assembly: AssemblyVersion("1.2.0.0")]
+[assembly: AssemblyVersion("1.2.1.0")]
 [assembly: AssemblyCopyright("Copyright © 2026 Vorix")]
 partial class Vorix : Form {
-    const string Version = "1.2.0 Pilot";
+    const string Version = "1.2.1 Pilot";
     static string Root = AppDomain.CurrentDomain.BaseDirectory;
     static string Home = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Vorix Endpoint");
     static string Data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Vorix Endpoint");
@@ -52,10 +52,11 @@ partial class Vorix : Form {
         if(Run("icacls.exe",Q(maintenance)+" /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F *S-1-5-32-545:(OI)(CI)RX")!=0)throw new Exception("Cannot secure the uninstaller folder.");
         string uninstaller=Path.Combine(maintenance,"Uninstall.exe");File.Copy(Path.Combine(Home,"Uninstall.exe"),uninstaller,true);
         using(var key=Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VorixEndpointStandalone")) {
-            key.SetValue("DisplayName","Vorix Endpoint Standalone");key.SetValue("DisplayVersion","1.2.0");key.SetValue("Publisher","Vorix");key.SetValue("InstallLocation",Home);key.SetValue("DisplayIcon",exe);key.SetValue("UninstallString",Q(uninstaller));key.SetValue("NoModify",1,RegistryValueKind.DWord);key.SetValue("NoRepair",1,RegistryValueKind.DWord);
+            key.SetValue("DisplayName","Vorix Endpoint Standalone");key.SetValue("DisplayVersion","1.2.1");key.SetValue("Publisher","Vorix");key.SetValue("InstallLocation",Home);key.SetValue("DisplayIcon",exe);key.SetValue("UninstallString",Q(uninstaller));key.SetValue("NoModify",1,RegistryValueKind.DWord);key.SetValue("NoRepair",1,RegistryValueKind.DWord);
         }
         Configure(ReadOptions());
         InstallSecurityMonitor();
+        StartStatusIcon();
         } finally {installGate.ReleaseMutex();}
         }
         if(!quiet)MessageBox.Show("Vorix Endpoint installed. Definitions update daily at 12:00 local time and after a missed schedule. The first download is running.\n\nOpen Vorix Endpoint from the Start menu.","Vorix Endpoint");

@@ -17,6 +17,9 @@ partial class Vorix {
         using(var run=Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"))run.SetValue("VorixStandaloneStatus",Q(Path.Combine(Home,"VorixStatus.exe")));
         PS("$w=New-Object -ComObject WScript.Shell; $l=$w.CreateShortcut([IO.Path]::Combine([Environment]::GetFolderPath('CommonPrograms'),'Vorix Endpoint status.lnk')); $l.TargetPath="+PSQ(Path.Combine(Home,"VorixStatus.exe"))+"; $l.Save()");
     }
+    static void StartStatusIcon() {
+        if(Process.GetCurrentProcess().SessionId!=0)Process.Start(new ProcessStartInfo(Path.Combine(Home,"VorixStatus.exe")){UseShellExecute=true,WorkingDirectory=Home,WindowStyle=ProcessWindowStyle.Hidden});
+    }
     static void ShowSecurityAlerts() {
         if(!Admin){Elevate("--security-alerts");return;}
         using(var dialog=new Form{Text="Vorix Standalone — local security alerts",ClientSize=new Size(1000,570),StartPosition=FormStartPosition.CenterScreen}) {

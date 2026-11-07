@@ -16,18 +16,21 @@ class StandaloneStatus : ApplicationContext {
     StandaloneStatus() {
         var menu=new ContextMenuStrip();menu.Items.Add("View monitoring status",null,delegate{Refresh();MessageBox.Show(message,"Vorix Standalone");});
         menu.Items.Add("Security alerts",null,delegate{Open("--security-alerts");});menu.Items.Add("Open Vorix Endpoint",null,delegate{Open("");});
-        menu.Items.Add(new ToolStripSeparator());menu.Items.Add("Close status icon",null,delegate{ExitThread();});
         icon=new NotifyIcon{Visible=true,ContextMenuStrip=menu};icon.DoubleClick+=delegate{Open("--security-alerts");};
         timer=new System.Windows.Forms.Timer{Interval=10000};timer.Tick+=delegate{Refresh();};Refresh();timer.Start();
+    }
+    public static bool IsMonitorProcessPresent(int pid) {
+        foreach(var process in Process.GetProcessesByName("python"))using(process){if(process.Id==pid)return true;}
+        return false;
     }
     void Open(string args){try{Process.Start(new ProcessStartInfo(Path.Combine(home,"Vorix Endpoint.exe"),args){UseShellExecute=true});}catch(Exception ex){MessageBox.Show(ex.Message);}}
     void Refresh() {
         int alertCount=0;Color color=Color.DarkOrange;string label="Installed; monitoring unverified";
-        message="Standalone client installed. No fresh monitoring report is available.\nClosing this icon does not stop the background monitor.";
+        message="Standalone client installed. No fresh monitoring report is available.\nThe status icon starts automatically at sign-in.";
         try {
             if(File.Exists(status)) {
                 var data=new JavaScriptSerializer().Deserialize<Dictionary<string,object>>(File.ReadAllText(status));
-                bool alive=false;try{alive=!Process.GetProcessById(Convert.ToInt32(data["pid"])).HasExited;}catch(ArgumentException){}
+                bool alive=IsMonitorProcessPresent(Convert.ToInt32(data["pid"]));
                 double age=DateTimeOffset.UtcNow.ToUnixTimeSeconds()-Convert.ToDouble(data["updated_at"]);
                 int count=data.ContainsKey("unresolved")?Convert.ToInt32(data["unresolved"]):0;alertCount=count;
                 label=!alive?"Monitor not running":age>180||age< -30?"Monitoring report stale":count>0?count+" threats need review":"Monitoring active";
@@ -46,7 +49,7 @@ class StandaloneStatus : ApplicationContext {
                 string error=data.ContainsKey("error")?Convert.ToString(data["error"]):"";
                 if(error.Length>0){if(color!=Color.Firebrick)color=Color.DarkOrange;detail+="\n"+error;}
                 if(age>180||age< -30)color=Color.DarkOrange;
-                message="Vorix Standalone 1.2.0\n"+label+detail+"\n\nLocal monitoring only. Defender provides real-time blocking.\nClosing this icon does not stop protection.";
+                message="Vorix Standalone 1.2.1\n"+label+detail+"\n\nLocal monitoring only. Defender provides real-time blocking.\nThe status icon remains available while you are signed in.";
             }
         } catch {label="Installed; monitoring unverified";color=Color.DarkOrange;}
         if(color==Color.DarkOrange&&label=="Monitoring active")label="Monitoring needs attention";

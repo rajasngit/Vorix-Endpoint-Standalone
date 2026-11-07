@@ -16,6 +16,12 @@ Windows endpoint antivirus scanning, powered by **ClamAV**, with the Vorix inter
 
 Keep Microsoft Defender enabled for real-time Windows protection. ClamAV provides on-demand and scheduled scans; this app does not provide ClamAV on-access scanning on Windows or standalone USB control.
 
+## New in 1.2.1
+
+- The status icon no longer offers a Close command. It starts at sign-in, and interactive installations launch it immediately.
+- Corrected monitor detection for ordinary users: the tray checks process names and IDs without opening a privileged handle to the SYSTEM worker.
+- Windows controls icon overflow visibility; drag Vorix from the hidden-icons area beside the clock to keep it in view.
+
 ## New in 1.2.0
 
 - Automatic ClamAV checks of new or changed completed files in local Downloads folders. Findings are reported for review without changing the original; Microsoft Defender provides real-time blocking.

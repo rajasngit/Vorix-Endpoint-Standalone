@@ -1,7 +1,7 @@
 param([switch]$SkipArchive)
 $ErrorActionPreference = 'Stop'
 $workspace = Split-Path $PSScriptRoot -Parent
-$package = Join-Path $workspace 'dist\Vorix-Endpoint-Standalone-1.2.0-win-x64'
+$package = Join-Path $workspace 'dist\Vorix-Endpoint-Standalone-1.2.1-win-x64'
 New-Item -ItemType Directory -Force $package, "$package\clamav", "$package\source" | Out-Null
 if (Test-Path -LiteralPath "$package\source\build.ps1") { Remove-Item -LiteralPath "$package\source\build.ps1" }
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'

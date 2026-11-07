@@ -1,4 +1,4 @@
-VORIX ENDPOINT — WINDOWS STANDALONE 1.2.0 PILOT
+VORIX ENDPOINT — WINDOWS STANDALONE 1.2.1 PILOT
 Powered by ClamAV. Copyright © 2026 Vorix.
 
 Windows 11 x64; .NET Framework 4.8 (included with Windows 11).
@@ -8,7 +8,7 @@ No HO server connection, enrollment token, separate Python installation or DNS c
 A private bundled Python runtime runs the background security monitor.
 
 INSTALL
-1. Run Vorix-Standalone-Setup-1.2.0-x64.exe and approve administrator access.
+1. Run Vorix-Standalone-Setup-1.2.1-x64.exe and approve administrator access.
 2. Choose Install / repair, or Uninstall for an existing standalone installation.
    For the portable ZIP, extract it and run Install.cmd instead.
 3. Open Vorix Endpoint from the Start menu. Wait for the initial definitions
@@ -50,7 +50,9 @@ Monitoring errors, skipped files and limits appear in the status icon.
 The clear Vorix status icon starts at sign-in. Start menu > Vorix Endpoint status
 can launch it immediately. Green means monitoring is healthy; amber indicates
 unknown/limited monitoring; red indicates a stopped monitor or unresolved alerts.
-Closing the icon leaves the monitor and antivirus running. Choose Security alerts
+The icon has no Close command and starts automatically at sign-in. Windows may
+put it under the hidden-icons arrow; drag it beside the clock to keep it visible.
+Choose Security alerts
 from the app or icon to review local results. Administrator access is required
 for detailed affected paths. Private history stays under:
 C:\ProgramData\Vorix Endpoint\private\monitor\history.json
