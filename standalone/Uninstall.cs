@@ -10,10 +10,10 @@ class Uninstall {
     [DllImport("kernel32.dll",CharSet=CharSet.Unicode,SetLastError=true)] static extern bool MoveFileEx(string from,string to,int flags);
 #if MANAGED
     const string Folder="EndpointConsole", Product="Vorix Managed Endpoint Agent", RegistryName="VorixEndpointManaged";
-    static string[] Tasks={"EndpointConsoleAgent","EndpointConsoleSignatures","EndpointConsoleUSBWorker","VorixFinalizeAgent","VorixManagedResume"};
+    static string[] Tasks={"EndpointConsoleAgent","EndpointConsoleSignatures","EndpointConsoleUSBWorker","VorixFinalizeAgent","VorixManagedResume","VorixAgentBootstrap"};
 #else
     const string Folder="Vorix Endpoint", Product="Vorix Endpoint Standalone", RegistryName="VorixEndpointStandalone";
-    static string[] Tasks={"VorixStandaloneDefinitions","VorixStandaloneFullScan","VorixStandaloneAppUpdates"};
+    static string[] Tasks={"VorixStandaloneDefinitions","VorixStandaloneFullScan","VorixStandaloneAppUpdates","VorixStandaloneMonitor"};
 #endif
     static string Home=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),Folder);
     static string Data=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),Folder);
@@ -150,7 +150,7 @@ class Uninstall {
 #endif
         try {
             System.Threading.Thread.Sleep(1500);
-            foreach(var name in new[]{"Vorix Endpoint","python","pythonw","clamscan","freshclam"})foreach(var p in Process.GetProcessesByName(name)) {
+            foreach(var name in new[]{"Vorix Endpoint","VorixTray","VorixStatus","python","pythonw","clamscan","freshclam"})foreach(var p in Process.GetProcessesByName(name)) {
                 if(p.Id==Process.GetCurrentProcess().Id)continue;
                 try{if(p.MainModule.FileName.StartsWith(Home.TrimEnd('\\')+"\\",StringComparison.OrdinalIgnoreCase)){p.Kill();p.WaitForExit(10000);}}
                 catch(System.ComponentModel.Win32Exception){/* Other products' protected processes are outside this installation. */}
@@ -159,6 +159,7 @@ class Uninstall {
             RemoveProductTasks();
             System.Threading.Thread.Sleep(1500);
 #if MANAGED
+            using(var run=Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",true)){if(run!=null)run.DeleteValue("VorixEndpointStatus",false);}
             string usbHelper=Path.Combine(Home,"usb_uninstall.py");
             if(!File.Exists(usbHelper))throw new Exception("The USB rollback helper is missing. Use the current managed-client cleanup package.");
             using(var rollback=Process.Start(new ProcessStartInfo(Path.Combine(Home,@"python\python.exe"),"-I \""+usbHelper+"\""){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true})) {
@@ -169,6 +170,8 @@ class Uninstall {
             Log("Removing program files: "+Home);RemoveTree(Home);
             Log("Removing definitions, settings and product data: "+Data);RemoveTree(Data);RemoveUserLogs();
 #if !MANAGED
+            using(var run=Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",true)){if(run!=null)run.DeleteValue("VorixStandaloneStatus",false);}
+            string statusLink=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),"Vorix Endpoint status.lnk");if(File.Exists(statusLink))File.Delete(statusLink);
             string link=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonPrograms),"Vorix Endpoint.lnk");if(File.Exists(link))File.Delete(link);
 #endif
             #if MANAGED

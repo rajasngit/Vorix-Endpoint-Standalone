@@ -58,7 +58,7 @@ class Setup : Form {
             remove=new Button{Left=240,Top=389,Width=200,Height=40,Text="Uninstall",Enabled=StandaloneInstalled};remove.Click+=async delegate{await UninstallStandalone();};Controls.Add(remove);
         }
         log=new TextBox{Left=24,Top=442,Width=600,Height=84,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical};Controls.Add(log);
-        Controls.Add(new Label{Left=24,Top=546,Width=600,Height=24,Text="© "+DateTime.Now.Year+" Vorix  •  "+(Managed?"Agent package 0.5.0":"Standalone 1.1.0")+" (Pilot)"});
+        Controls.Add(new Label{Left=24,Top=546,Width=600,Height=24,Text="© "+DateTime.Now.Year+" Vorix  •  "+(Managed?"Agent package 0.7.0":"Standalone 1.2.0")+" (Pilot)"});
         FormClosing+=delegate(object sender,FormClosingEventArgs e){if(working){e.Cancel=true;MessageBox.Show("Wait for setup to finish before closing.");}};
     }
     async Task Install() {

@@ -62,7 +62,7 @@ partial class Vorix {
                 string report=Path.Combine(Data,"scheduled-scan-status.json");Report(report,new{state="running",at=DateTimeOffset.Now.ToUnixTimeSeconds(),message="Silent full-system scan running"});
                 var quarantine=new QuarantineSession();
                 string args=quarantine.Arguments+" --database="+Q(Db)+" --recursive --follow-dir-symlinks=0 --follow-file-symlinks=0 --cross-fs=no --exclude-dir="+Q("^"+System.Text.RegularExpressions.Regex.Escape(Data))+" --exclude="+Q(@"^[A-Za-z]:[\\/](pagefile|swapfile|hiberfil)\.sys$")+" --log="+Q(log)+" --";
-                int roots=0;foreach(var drive in DriveInfo.GetDrives())if(drive.IsReady&&drive.DriveType==DriveType.Fixed){args+=" "+Q(drive.RootDirectory.FullName);roots++;}if(roots==0)throw new Exception("No ready local fixed drives found.");
+                int roots=0;foreach(var drive in DriveInfo.GetDrives())if(drive.IsReady&&(drive.DriveType==DriveType.Fixed||drive.DriveType==DriveType.Removable)){args+=" "+Q(drive.RootDirectory.FullName);roots++;}if(roots==0)throw new Exception("No ready local drives found.");
                 var tail=new StringBuilder();object gate=new object();
                 using(var p=new Process{StartInfo=new ProcessStartInfo(Path.Combine(Home,@"clamav\clamscan.exe"),args){UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true}}) {
                     System.Diagnostics.DataReceivedEventHandler capture=delegate(object sender,DataReceivedEventArgs e){if(e.Data==null||e.Data.EndsWith(": OK"))return;lock(gate){tail.AppendLine(quarantine.Capture(e.Data));if(tail.Length>16000)tail.Remove(0,tail.Length-8000);}};

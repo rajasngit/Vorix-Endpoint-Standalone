@@ -11,10 +11,10 @@ using Microsoft.Win32;
 
 [assembly: AssemblyTitle("Vorix Endpoint")]
 [assembly: AssemblyProduct("Vorix Endpoint Standalone")]
-[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyVersion("1.2.0.0")]
 [assembly: AssemblyCopyright("Copyright © 2026 Vorix")]
 partial class Vorix : Form {
-    const string Version = "1.1.0 Pilot";
+    const string Version = "1.2.0 Pilot";
     static string Root = AppDomain.CurrentDomain.BaseDirectory;
     static string Home = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Vorix Endpoint");
     static string Data = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Vorix Endpoint");
@@ -34,6 +34,11 @@ partial class Vorix : Form {
             if(process.Id==Process.GetCurrentProcess().Id)continue;
             if(String.Equals(process.MainModule.FileName,Path.Combine(Home,"Vorix Endpoint.exe"),StringComparison.OrdinalIgnoreCase))throw new Exception("Close the running Vorix Endpoint app before installing or repairing it.");
         }
+        using(var installGate=ScanMutex()) {
+        if(!TakeScan(installGate))throw new Exception("Wait for the active standalone scan to finish before upgrading.");
+        try {
+        PS("$t=Get-ScheduledTask -TaskName VorixStandaloneMonitor -ErrorAction SilentlyContinue; if($t){Stop-ScheduledTask -TaskName VorixStandaloneMonitor; Start-Sleep -Seconds 2}");
+        foreach(var old in Process.GetProcessesByName("VorixStatus")){try{if(String.Equals(old.MainModule.FileName,Path.Combine(Home,"VorixStatus.exe"),StringComparison.OrdinalIgnoreCase)){old.Kill();old.WaitForExit(10000);}}catch(System.ComponentModel.Win32Exception){}}
         Directory.CreateDirectory(Home); Directory.CreateDirectory(Data);
         foreach(string dir in new[]{Home,Data}) {
             if(Run("icacls.exe",Q(dir)+" /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F *S-1-5-32-545:(OI)(CI)RX")!=0) throw new Exception("Cannot secure installation folders.");
@@ -47,9 +52,12 @@ partial class Vorix : Form {
         if(Run("icacls.exe",Q(maintenance)+" /inheritance:r /grant:r *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F *S-1-5-32-545:(OI)(CI)RX")!=0)throw new Exception("Cannot secure the uninstaller folder.");
         string uninstaller=Path.Combine(maintenance,"Uninstall.exe");File.Copy(Path.Combine(Home,"Uninstall.exe"),uninstaller,true);
         using(var key=Registry.LocalMachine.CreateSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\VorixEndpointStandalone")) {
-            key.SetValue("DisplayName","Vorix Endpoint Standalone");key.SetValue("DisplayVersion","1.1.0");key.SetValue("Publisher","Vorix");key.SetValue("InstallLocation",Home);key.SetValue("DisplayIcon",exe);key.SetValue("UninstallString",Q(uninstaller));key.SetValue("NoModify",1,RegistryValueKind.DWord);key.SetValue("NoRepair",1,RegistryValueKind.DWord);
+            key.SetValue("DisplayName","Vorix Endpoint Standalone");key.SetValue("DisplayVersion","1.2.0");key.SetValue("Publisher","Vorix");key.SetValue("InstallLocation",Home);key.SetValue("DisplayIcon",exe);key.SetValue("UninstallString",Q(uninstaller));key.SetValue("NoModify",1,RegistryValueKind.DWord);key.SetValue("NoRepair",1,RegistryValueKind.DWord);
         }
         Configure(ReadOptions());
+        InstallSecurityMonitor();
+        } finally {installGate.ReleaseMutex();}
+        }
         if(!quiet)MessageBox.Show("Vorix Endpoint installed. Definitions update daily at 12:00 local time and after a missed schedule. The first download is running.\n\nOpen Vorix Endpoint from the Start menu.","Vorix Endpoint");
     }
     static int UpdateDefinitions() {
@@ -84,12 +92,12 @@ partial class Vorix : Form {
         update=ButtonAt("Update definitions",199,204,190,async delegate { await ElevatedAction("--update"); });
         scan=ButtonAt("Scan folder",401,204,150,delegate { using(var d=new FolderBrowserDialog()) if(d.ShowDialog()==DialogResult.OK) StartScan(new[]{d.SelectedPath}); });
         ButtonAt("Scan file",563,204,145,delegate { using(var d=new OpenFileDialog()) if(d.ShowDialog()==DialogResult.OK) StartScan(new[]{d.FileName}); });
-        full=ButtonAt("Full scan",720,204,168,delegate { var drives=new System.Collections.Generic.List<string>(); foreach(var d in DriveInfo.GetDrives()) if(d.IsReady && d.DriveType==DriveType.Fixed) drives.Add(d.RootDirectory.FullName); if(drives.Count>0) StartScan(drives.ToArray()); });
+        full=ButtonAt("Full scan",720,204,168,delegate { var drives=new System.Collections.Generic.List<string>(); foreach(var d in DriveInfo.GetDrives()) if(d.IsReady && (d.DriveType==DriveType.Fixed||d.DriveType==DriveType.Removable)) drives.Add(d.RootDirectory.FullName); if(drives.Count>0) StartScan(drives.ToArray()); });
         output=new TextBox{Left=32,Top=264,Width=856,Height=282,Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical,BackColor=Color.FromArgb(12,23,39),ForeColor=Color.FromArgb(213,226,238),Font=new Font("Consolas",9)}; Controls.Add(output);
         ButtonAt("Open scan logs",32,562,170,delegate { string p=LogDir(); Directory.CreateDirectory(p); Process.Start("explorer.exe",Q(p)); });
         ButtonAt("Review quarantine",370,562,195,delegate{ReviewQuarantine();});
         ButtonAt("Stop scan",214,562,145,delegate { if(worker!=null && !worker.HasExited) { worker.Kill(); Append("Scan cancelled — coverage incomplete."); } });
-        TextAt(this,"Detections move to quarantine for review.\nMicrosoft Defender supplies real-time protection.",578,560,310,49,9,Accent);
+        ButtonAt("Security alerts",578,562,310,delegate{ShowSecurityAlerts();});
         ButtonAt("Check administrator",32,662,190,delegate {MessageBox.Show(Admin?"This application is running as administrator.":"This application is running without administrator access. Use Run as administrator for protected-file scans.","Administrator check");});
         ButtonAt("Run as administrator",234,662,210,delegate {if(Admin){MessageBox.Show("Already running as administrator.");return;}if(busy){MessageBox.Show("Finish or stop the current scan first.");return;}try{Elevate("");Close();}catch(Exception ex){Append(ex.Message);}});
         ButtonAt("Uninstall",456,662,160,delegate {if(busy){MessageBox.Show("Finish or stop the current scan first.");return;}string path=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),@"Vorix Standalone Maintenance\Uninstall.exe");if(!File.Exists(path)){MessageBox.Show("Install or repair this version first to register its uninstaller.");return;}try{Process.Start(new ProcessStartInfo(path){UseShellExecute=true,Verb="runas"});Close();}catch(Exception ex){Append(ex.Message);}});
@@ -144,6 +152,7 @@ partial class Vorix : Form {
         Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
         try {
             if(args.Length>0&&(args[0]=="--scan-path"||args[0]=="--review-quarantine")){using(var f=new Vorix()){f.Shown+=delegate{if(args[0]=="--review-quarantine")f.ReviewQuarantine();else{var paths=new string[args.Length-1];Array.Copy(args,1,paths,0,paths.Length);f.StartScan(paths);}};Application.Run(f);}return 0;}
+            if(args.Length>0 && args[0]=="--security-alerts"){ShowSecurityAlerts();return 0;}
             int automationResult;if(AutomationCommand(args,out automationResult))return automationResult;
             if(args.Length>0 && args[0]=="--install") { Install(); return 0; }
             if(args.Length>0 && args[0]=="--install-quiet") { Install(true); return 0; }

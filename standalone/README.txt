@@ -1,13 +1,14 @@
-VORIX ENDPOINT — WINDOWS STANDALONE 1.1.0 PILOT
+VORIX ENDPOINT — WINDOWS STANDALONE 1.2.0 PILOT
 Powered by ClamAV. Copyright © 2026 Vorix.
 
 Windows 11 x64; .NET Framework 4.8 (included with Windows 11).
 Allow roughly 2 GB disk space plus scan logs, and at least 4 GB free RAM.
 Internet access is required for the initial definition download and daily updates.
-No HO server connection, enrollment token, Python installation or DNS change.
+No HO server connection, enrollment token, separate Python installation or DNS change.
+A private bundled Python runtime runs the background security monitor.
 
 INSTALL
-1. Run Vorix-Standalone-Setup-1.1.0-x64.exe and approve administrator access.
+1. Run Vorix-Standalone-Setup-1.2.0-x64.exe and approve administrator access.
 2. Choose Install / repair, or Uninstall for an existing standalone installation.
    For the portable ZIP, extract it and run Install.cmd instead.
 3. Open Vorix Endpoint from the Start menu. Wait for the initial definitions
@@ -27,13 +28,34 @@ Check update status and errors in the application and:
 C:\ProgramData\Vorix Endpoint\logs\freshclam.log
 
 SCANNING
-Choose a file, folder, or all ready fixed drives. Stop scan cancels the scan;
+Choose a file, folder, or all ready local fixed and removable drives. Stop scan cancels the scan;
 cancelled or failed scans must never be treated as clean. Scan logs are saved to
 %LOCALAPPDATA%\Vorix Endpoint\logs and can include filenames and findings.
-Scan results report detections and never automatically delete or move files.
+Manual and scheduled scan detections move to protected quarantine for review.
+Automatic download checks scan a protected snapshot and report findings without
+changing or blocking the original file. Defender provides real-time blocking.
 Normal user permissions may prevent scanning protected files. For broader
 coverage, run the Start menu application as administrator. Symlinks are not
 followed. ClamAV size/archive/time limits still apply; review the complete log.
+
+LOCAL SECURITY ALERTS AND DOWNLOAD MONITORING
+The background VorixStandaloneMonitor task runs as SYSTEM at startup, even while
+signed out. It reports Defender detection history locally and checks new or
+changed completed files in local user Downloads folders. The first inventory
+baselines existing files; use Full scan for those. Incomplete downloads wait.
+Checks are bounded to 500 MiB per file, three files per pass, 5000 files per
+inventory and eight subdirectory levels. Linked/network folders are excluded.
+Monitoring errors, skipped files and limits appear in the status icon.
+
+The clear Vorix status icon starts at sign-in. Start menu > Vorix Endpoint status
+can launch it immediately. Green means monitoring is healthy; amber indicates
+unknown/limited monitoring; red indicates a stopped monitor or unresolved alerts.
+Closing the icon leaves the monitor and antivirus running. Choose Security alerts
+from the app or icon to review local results. Administrator access is required
+for detailed affected paths. Private history stays under:
+C:\ProgramData\Vorix Endpoint\private\monitor\history.json
+No detections or file contents are sent to a management console. This is on-device
+file checking; it does not scan an email service before mail delivery.
 
 REAL-TIME PROTECTION
 ClamAV supplies on-demand Windows scanning. Keep Microsoft Defender or an

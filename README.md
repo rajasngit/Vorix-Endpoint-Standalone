@@ -1,20 +1,30 @@
 # Vorix Endpoint Standalone
 
-Windows endpoint antivirus scanning, powered by **ClamAV**, with the Vorix interface. No Python installation, central server, enrollment token, or DNS change is required.
+Windows endpoint antivirus scanning, powered by **ClamAV**, with the Vorix interface. No separate Python installation, central server, enrollment token, or DNS change is required. The background monitor uses a private bundled Python runtime.
 
 [Download the latest Windows x64 installer](https://github.com/rajasngit/Vorix-Endpoint-Standalone/releases/latest)
 
 ## Features
 
-- File, folder and full local fixed-drive scans. Detections move to a protected, non-executable quarantine vault. Review and restore safe files or explicitly delete them; move failures remain unresolved.
+- File, folder and full ready local fixed/removable-drive scans. Detections move to a protected, non-executable quarantine vault. Review and restore safe files or explicitly delete them; move failures remain unresolved.
 - Silent weekly full-system scan, enabled by default on Sunday at 02:00 local time. Enable/disable and choose the day/time in **Settings / schedules**.
 - Official ClamAV definitions refreshed daily at 12:00 using FreshClam, with missed-run catch-up.
 - Green/red administrator status and elevation controls.
 - Manual app-update checks and optional hourly background checks. The default prompts while the app is open; automatic mode upgrades when the app/scanner is closed.
 - Pinned RSA/SHA-256 release metadata verification and installer hash checks. No GitHub token is stored on a client.
-- Install/repair and complete uninstall from Setup, the app, or Windows Installed Apps. Uninstall removes all three scheduled tasks, definitions, settings, program files and product logs. Quarantined files must first be reviewed and restored or explicitly deleted.
+- Install/repair and complete uninstall from Setup, the app, or Windows Installed Apps. Uninstall removes the scheduled tasks and status-icon startup entry, definitions, settings, program files and product logs. Quarantined files must first be reviewed and restored or explicitly deleted.
 
 Keep Microsoft Defender enabled for real-time Windows protection. ClamAV provides on-demand and scheduled scans; this app does not provide ClamAV on-access scanning on Windows or standalone USB control.
+
+## New in 1.2.0
+
+- Automatic ClamAV checks of new or changed completed files in local Downloads folders. Findings are reported for review without changing the original; Microsoft Defender provides real-time blocking.
+- Local Defender detection history with action results and remaining remediation requirements. Detailed affected paths require administrator access.
+- A clear Vorix notification-area icon with monitor health and unresolved-alert indication. Close the icon without stopping the background monitor.
+- Security alerts available from the app and icon. No alert data is sent to a central console.
+- Full scans discover all ready local fixed and removable drives each time.
+
+Existing downloads are baselined on the first inventory; use Full scan for them. Extra download checks have file-size, inventory and depth limits, shown in monitoring status. This does not scan a mail service before delivery. The monitor runs as SYSTEM at startup; the icon starts at sign-in or from **Vorix Endpoint status** in Start.
 
 ## Requirements and installation
 
@@ -24,7 +34,7 @@ Detailed scan logs for SYSTEM scans are administrator-only in `C:\ProgramData\Vo
 
 ## Build from source
 
-Run `powershell -ExecutionPolicy Bypass -File .\build.ps1` on Windows x64. The script fetches the pinned official ClamAV 1.5.4 archive and matching source tarball, checks SHA-256, and builds the native .NET app and installer. The redistributable installer includes source and third-party licenses. Output is under `dist/`.
+Run `powershell -ExecutionPolicy Bypass -File .\build.ps1` on Windows x64. The script fetches the pinned official ClamAV 1.5.4 archive and matching source tarball plus the official embedded Python runtime, checks SHA-256, and builds the native .NET app and installer. The redistributable installer includes source and third-party licenses. Output is under `dist/`.
 
 No private signing key, deployment configuration, endpoint identity, or user logs belong in this repository. Release metadata is signed outside GitHub using the publisher's protected private key. Forks must substitute their own public update key and repository path before distributing their own updates.
 
